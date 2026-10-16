@@ -15,16 +15,20 @@
   var navLinks = $('#navLinks');
 
   function closeNav() {
-    nav.classList.remove('is-open');
-    navToggle.setAttribute('aria-expanded', 'false');
+    if (nav) nav.classList.remove('is-open');
+    if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
     document.body.classList.remove('is-locked');
   }
-  navToggle.addEventListener('click', function () {
-    var open = nav.classList.toggle('is-open');
-    navToggle.setAttribute('aria-expanded', String(open));
-    document.body.classList.toggle('is-locked', open);
-  });
-  navLinks.addEventListener('click', function (e) { if (e.target.tagName === 'A') closeNav(); });
+  if (navToggle) {
+    navToggle.addEventListener('click', function () {
+      var open = nav && nav.classList.toggle('is-open');
+      navToggle.setAttribute('aria-expanded', String(Boolean(open)));
+      document.body.classList.toggle('is-locked', Boolean(open));
+    });
+  }
+  if (navLinks) {
+    navLinks.addEventListener('click', function (e) { if (e.target.tagName === 'A') closeNav(); });
+  }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeNav(); });
 
   /* ------------------------------------------- 2. 滚动进度 / 吸顶 / 回顶 */
@@ -35,9 +39,9 @@
   function onScroll() {
     var y = window.scrollY || document.documentElement.scrollTop;
     var h = document.documentElement.scrollHeight - window.innerHeight;
-    progress.style.width = (h > 0 ? Math.min(100, (y / h) * 100) : 0) + '%';
-    nav.classList.toggle('is-stuck', y > 12);
-    toTop.classList.toggle('is-on', y > 700);
+    if (progress) progress.style.width = (h > 0 ? Math.min(100, (y / h) * 100) : 0) + '%';
+    if (nav) nav.classList.toggle('is-stuck', y > 12);
+    if (toTop) toTop.classList.toggle('is-on', y > 700);
     ticking = false;
   }
   window.addEventListener('scroll', function () {
@@ -45,9 +49,11 @@
   }, { passive: true });
   onScroll();
 
-  toTop.addEventListener('click', function () {
-    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
-  });
+  if (toTop) {
+    toTop.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    });
+  }
 
   /* ------------------------------------------------------------ 3. 滚动监听 */
   var sections = $$('main section[id]');
@@ -91,7 +97,7 @@
       btn.addEventListener('click', function () { select(i); });
       btn.addEventListener('keydown', function (e) {
         var n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : -1;
-        if (n < 0) return;
+        if (n === -1) return; // only ignore non-left/right keys
         e.preventDefault();
         n = (n + btns.length) % btns.length;
         btns[n].focus(); select(n);
@@ -133,22 +139,21 @@
     var h = HORSES[i];
     if (!h) return;
     hmCurrent = i;
-    $('#hmHero').style.background = 'linear-gradient(135deg,' + h.color + ',' + shade(h.color, -22) + ')';
-    $('#hmSide').textContent = h.side;
-    $('#hmName').textContent = h.name;
-    $('#hmPraise').textContent = '「' + h.praise + '」';
-    $('#hmPos').textContent = h.pos;
-    $('#hmColor').textContent = h.coat;
-    $('#hmWound').textContent = h.wound;
-    $('#hmElem').textContent = h.element;
-    $('#hmSpirit').textContent = h.spirit;
-    var art = $('#hmArt');
-    art.src = 'assets/img/horses/' + h.art + '.webp';
-    art.alt = h.name; // 装饰性配图，名称已在正文中给出
+    var el;
+    el = $('#hmHero'); if (el) el.style.background = 'linear-gradient(135deg,' + h.color + ',' + shade(h.color, -22) + ')';
+    el = $('#hmSide'); if (el) el.textContent = h.side;
+    el = $('#hmName'); if (el) el.textContent = h.name;
+    el = $('#hmPraise'); if (el) el.textContent = '「' + h.praise + '」';
+    el = $('#hmPos'); if (el) el.textContent = h.pos;
+    el = $('#hmColor'); if (el) el.textContent = h.coat;
+    el = $('#hmWound'); if (el) el.textContent = h.wound;
+    el = $('#hmElem'); if (el) el.textContent = h.element;
+    el = $('#hmSpirit'); if (el) el.textContent = h.spirit;
+    var art = $('#hmArt'); if (art) { art.src = 'assets/img/horses/' + h.art + '.webp'; art.alt = h.name; }
     var tpl = $('#horseTemplates [data-tpl="' + i + '"]');
-    $('#hmExtra').innerHTML = tpl ? tpl.innerHTML : '';
+    var hmExtra = $('#hmExtra'); if (hmExtra) hmExtra.innerHTML = tpl ? tpl.innerHTML : '';
     $$('.horse').forEach(function (b) {
-      b.style.borderColor = b.dataset.horse === String(i) ? h.color : '';
+      try { b.style.borderColor = b.dataset.horse === String(i) ? h.color : ''; } catch (e) {}
     });
   }
   function shade(hex, pct) {
@@ -160,6 +165,7 @@
   }
 
   function openHorse(i) {
+    if (!horseModal) return;
     lastFocus = document.activeElement;
     fillHorse(i);
     openModal(horseModal);
@@ -194,17 +200,16 @@
   function fillMember(i) {
     mmIndex = ((i % MEMBERS.length) + MEMBERS.length) % MEMBERS.length;
     var m = MEMBERS[mmIndex];
-    var img = $('#mmPoster');
-    img.src = 'assets/img/members/' + m.slug + '.webp';
-    img.alt = m.name + '的个人介绍海报';
-    $('#mmName').textContent = m.name;
-    $('#mmGroup').textContent = m.group;
-    $('#mmIndex').textContent = (mmIndex + 1) + ' / ' + MEMBERS.length;
+    var img = $('#mmPoster'); if (img) { img.src = 'assets/img/members/' + m.slug + '.webp'; img.alt = m.name + '的个人介绍海报'; }
+    var el = $('#mmName'); if (el) el.textContent = m.name;
+    el = $('#mmGroup'); if (el) el.textContent = m.group;
+    el = $('#mmIndex'); if (el) el.textContent = (mmIndex + 1) + ' / ' + MEMBERS.length;
     $$('.member').forEach(function (b) {
-      b.classList.toggle('is-active', b.dataset.member === m.slug);
+      try { b.classList.toggle('is-active', b.dataset.member === m.slug); } catch (e) {}
     });
   }
   function openMember(slug) {
+    if (!memberModal) return;
     var i = MEMBERS.findIndex(function (m) { return m.slug === slug; });
     if (i < 0) return;
     lastFocus = document.activeElement;
@@ -222,7 +227,7 @@
     b.addEventListener('click', function () { fillMember(mmIndex + 1); });
   });
   document.addEventListener('keydown', function (e) {
-    if (!memberModal.classList.contains('is-open')) return;
+    if (!memberModal || !memberModal.classList.contains('is-open')) return;
     if (e.key === 'ArrowRight') { e.preventDefault(); fillMember(mmIndex + 1); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); fillMember(mmIndex - 1); }
   });
@@ -244,20 +249,25 @@
   var openStack = [];
 
   function openModal(el) {
+    if (!el) return;
     el.classList.add('is-open');
     var box = el.querySelector('.modal__box');
     if (box) box.scrollTop = 0; // 重新打开时回到顶部，避免残留上次的滚动位置
     document.body.classList.add('is-locked');
     openStack.push(el);
-    var focusable = el.querySelector('[data-close], button, a[href], video');
+    var focusable = el.querySelector('[data-close], button, a[href], input, textarea, [tabindex], video');
     if (focusable) focusable.focus({ preventScroll: true });
   }
   function closeModal(el) {
+    if (!el) return;
     el.classList.remove('is-open');
-    if (el.id === 'videoModal') { var v = $('#videoPlayer'); v.pause(); v.removeAttribute('src'); v.load(); }
+    if (el.id === 'videoModal') {
+      var v = $('#videoPlayer');
+      if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {} }
+    }
     openStack = openStack.filter(function (m) { return m !== el; });
     if (!openStack.length) document.body.classList.remove('is-locked');
-    if (lastFocus) { lastFocus.focus({ preventScroll: true }); lastFocus = null; }
+    if (lastFocus) { try { lastFocus.focus({ preventScroll: true }); } catch (e) {} lastFocus = null; }
   }
   $$('[data-close]').forEach(function (b) {
     b.addEventListener('click', function () { closeModal(b.closest('.modal, .lightbox')); });
@@ -271,7 +281,7 @@
   });
   // 六骏弹窗：左右方向键切换（弹窗打开时全局生效）
   document.addEventListener('keydown', function (e) {
-    if (!horseModal.classList.contains('is-open')) return;
+    if (!horseModal || !horseModal.classList.contains('is-open')) return;
     if (e.key === 'ArrowRight') { e.preventDefault(); fillHorse((hmCurrent + 1) % HORSES.length); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); fillHorse((hmCurrent + HORSES.length - 1) % HORSES.length); }
   });
@@ -286,9 +296,9 @@
     if (!shots.length) return;
     lbIndex = (i + shots.length) % shots.length;
     var el = shots[lbIndex];
-    lbImg.src = el.dataset.full;
-    lbImg.alt = el.dataset.cap || '';
-    lbCap.textContent = el.dataset.cap || '';
+    if (lbImg) lbImg.src = el.dataset.full;
+    if (lbImg) lbImg.alt = el.dataset.cap || '';
+    if (lbCap) lbCap.textContent = el.dataset.cap || '';
   }
   shots.forEach(function (el, i) {
     el.addEventListener('click', function () { lastFocus = el; showLb(i); openModal(lightbox); });
@@ -301,9 +311,9 @@
   var lbPrev = $('[data-lb-prev]'), lbNext = $('[data-lb-next]');
   if (lbPrev) lbPrev.addEventListener('click', function (e) { e.stopPropagation(); showLb(lbIndex - 1); });
   if (lbNext) lbNext.addEventListener('click', function (e) { e.stopPropagation(); showLb(lbIndex + 1); });
-  lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeModal(lightbox); });
+  if (lightbox) lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeModal(lightbox); });
   document.addEventListener('keydown', function (e) {
-    if (!lightbox.classList.contains('is-open')) return;
+    if (!lightbox || !lightbox.classList.contains('is-open')) return;
     if (e.key === 'ArrowLeft') showLb(lbIndex - 1);
     if (e.key === 'ArrowRight') showLb(lbIndex + 1);
   });
@@ -315,6 +325,7 @@
   $$('[data-video]').forEach(function (card) {
     function play() {
       lastFocus = card;
+      if (!player) return openModal(videoModal);
       player.src = card.dataset.video;
       player.setAttribute('aria-label', card.dataset.title || '视频');
       openModal(videoModal);
@@ -335,7 +346,8 @@
       var target = document.getElementById(id.slice(1));
       if (!target) return;
       e.preventDefault();
-      var top = target.getBoundingClientRect().top + window.scrollY - (nav.offsetHeight + 12);
+      var navOffset = nav ? nav.offsetHeight : 0;
+      var top = target.getBoundingClientRect().top + window.scrollY - (navOffset + 12);
       window.scrollTo({ top: top, behavior: reduce ? 'auto' : 'smooth' });
       history.replaceState(null, '', id);
     });
